@@ -1,14 +1,7 @@
 raise NotImplementedError("WIP")
 
-import logging
-
 import torch
 import numpy as np
-
-
-logging.basicConfig()
-logger = logging.getLogger("metrics")
-logger.setLevel(logging.DEBUG)
 
 
 def confusion_matrix(input_, target, num_classes):

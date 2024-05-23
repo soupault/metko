@@ -31,11 +31,30 @@ def cohen_d_var(d, n1, n2):
     return v
 
 
-def r2(x, y):
-    return stats.pearsonr(x, y)[0] ** 2
+def correlation(m1, m2):
+    """
+
+    Args:
+        m1:
+        m2:
+
+    Returns:
+
+    """
+    r2 = stats.pearsonr(m1, m2)[0] ** 2
+    return {"r2": r2}
 
 
 def linreg(x, y):
+    """
+
+    Args:
+        x:
+        y:
+
+    Returns:
+
+    """
     tmp = stats.linregress(x, y)
     return {"slope": tmp[0],
             "intercept": tmp[1],

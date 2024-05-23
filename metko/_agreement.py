@@ -4,7 +4,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def bland_altman(m1, m2):
+def bland_altman_naive(m1, m2):
+    """
+
+    Args:
+        m1:
+        m2:
+
+    Returns:
+
+    """
     if len(m1) != len(m2):
         raise ValueError("m1 does not have the same length as m2.")
 
@@ -12,9 +21,22 @@ def bland_altman(m1, m2):
     diffs = m1 - m2
     mean_diff = np.mean(diffs)
     std_diff = np.std(diffs, axis=0)
-    return means, diffs, mean_diff, std_diff
+    return {"means": means, "diffs": diffs,
+            "mean_diff": mean_diff, "std_diff": std_diff}
 
-    # TODO: Bland-Altman extended
+
+def bland_altman_extended(m1, m2):
+    """
+
+    Args:
+        m1:
+        m2:
+
+    Returns:
+
+    """
+    # TODO: bland_altman_extended
+    raise NotImplementedError("WIP")
 
 
 def bland_altman_plot(m1, m2,
@@ -127,4 +149,9 @@ def bland_altman_plot(m1, m2,
 
 def taffe():
     # TODO: Taffe method
+    raise NotImplemented()
+
+
+def taffe_bias_precision_plot():
+    # TODO: taffe_bias_precision_plot
     raise NotImplemented()

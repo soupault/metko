@@ -6,7 +6,7 @@ import torch
 
 
 def distance_transform(input_, num_classes, spacing_rw=(1., 1., 1.), skip_classes=None):
-    """
+    """Euclidean distance transform.
 
     Args:
         input_: (b, d0, ..., dn) ndarray or tensor

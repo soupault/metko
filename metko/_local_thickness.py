@@ -10,8 +10,6 @@ from numba import jit, prange
 import nibabel as nib
 import torch
 
-from ksean import numpy_to_nifti
-
 
 @jit(nopython=True)
 def _local_thick_2d(mask, med_axis, distance, spacing, search_extent):
@@ -319,95 +317,3 @@ def local_thickness(input_, num_classes, stack_axis, spacing_rw=(1., 1., 1.),
         th_maps[sample_idx, :] = th_map
 
     return th_maps
-
-
-if __name__ == "__main__":
-    if False:
-    # if True:
-        # ******************************** 2D case ************************************
-        print("2D")
-        # x_2d = np.zeros((100, 200))
-        # x_2d[30:50, 20:140] = 1
-        fname = "/home/egor/Workspace/_experim/thickness/synthetic/complex_shape.png"
-        x_2d = cv2.imread(str(fname), cv2.IMREAD_GRAYSCALE)
-
-        t0 = time()
-        th_2d, skel_2d, dist_2d = _local_thickness(x_2d,
-                                                   thickness_max=10,
-                                                   return_med_axis=True,
-                                                   return_distance=True)
-        t1 = time()
-        print(t1 - t0)
-
-        quit()
-
-        fig, axes = plt.subplots(ncols=2, nrows=2)
-        axes = axes.ravel()
-        axes[0].imshow(x_2d, cmap="gray")
-        axes[0].set_title("Input")
-        axes[1].imshow(skel_2d, cmap="gray")
-        axes[1].set_title("Medial axis / skeleton")
-        axes[2].imshow(dist_2d, cmap="viridis")  #"gray")
-        axes[2].set_title("Distance transform")
-        axes[3].imshow(th_2d, cmap="viridis")  #"gray")
-        axes[3].set_title("Local thickness")
-        plt.tight_layout()
-        plt.show()
-
-        # quit()
-
-    # ******************************** 3D case ************************************
-    if True:
-    # if False:
-        print("3D")
-        # KL3
-        unique_id = "kl3"
-        nii_3d_in = nib.load(("/home/egor/Workspace/p01_ksean/results/"
-                              "20190720_0001/predicts_oai_prj_22_test/"
-                              "9002817/0.C.2/sag_3d_dess_we/mask_foldavg_biomediq.nii"))
-
-        # KL4
-        # unique_id = "kl4"
-        # nii_3d_in = nib.load(("/home/egor/Workspace/p01_ksean/results/"
-        #                       "20190720_0001/predicts_oai_prj_22_test/"
-        #                       "9066155/1.E.1/sag_3d_dess_we/mask_foldavg_biomediq.nii"))
-
-        x_3d = nii_3d_in.get_fdata()
-        # # x_3d = x_3d == 8  # medial femoral
-        x_3d = np.isin(x_3d, (8, 9))  # full femoral
-
-        if False:
-        # if True:
-            # Save for processing in ImageJ
-            spacings = (0.7, 0.365, 0.365)  # OAI
-            fname = f"out_{unique_id}.nii"
-            numpy_to_nifti(
-                np.squeeze(x_3d).astype(np.uint8),
-                Path("/home/egor/Workspace/_experim/thickness", fname),
-                spacings=spacings,
-                rcp_to_ras=True)
-            quit()
-
-        # for mode in ("stacked_2d", "med2d_dist2d_lth3d", "med2d_dist3d_lth3d"):
-        for mode in ("med2d_dist3d_lth3d", ):
-            print(f"Mode: {mode}")
-
-            # spacings = (0.365, 0.365, 0.7)  # OAI
-            spacings = (0.7, 0.365, 0.365)  # OAI
-
-            # NOTE: ImageJ plugin does not seems to actually use voxel spacing.
-            #       For comparison, comment the corresponding line.
-            for _ in range(2):
-                t0 = time()
-                th_3d = _local_thickness(x_3d, mode=mode, stack_axis=0,
-                                         spacing_rw=spacings)
-                                         # thickness_max_rw=10)
-                t1 = time()
-                print(t1 - t0)
-
-            # Save the results
-            fname = f"thickness_{mode}_{unique_id}.nii"
-            numpy_to_nifti(th_3d,
-                           Path("/home/egor/Workspace/_experim/thickness", fname),
-                           spacings=spacings,
-                           rcp_to_ras=True)

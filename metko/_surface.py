@@ -18,17 +18,10 @@ raise NotImplementedError("WIP")
 import logging
 
 import torch
-import torch.nn.functional as F
-from torch import nn
 import numpy as np
 from scipy import ndimage
 
 from ._surface_lut import neighbour_code_to_normals
-
-
-logging.basicConfig()
-logger = logging.getLogger("metrics")
-logger.setLevel(logging.DEBUG)
 
 
 def _surf_dists(mask_gt, mask_pred, spacing_rw):
