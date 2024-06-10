@@ -7,7 +7,17 @@ import torch.nn.functional as F
 
 # Modified from https://github.com/voxelmorph/voxelmorph/blob/dev/voxelmorph/torch/losses.py
 def ncc(y_true, y_pred, *, win=None, device="cpu"):
-    """Local (over window) normalized cross correlation loss."""
+    """Local (over window) normalized cross correlation loss.
+
+    Args:
+        y_true: (d0, ..., dn) ndarray or tensor
+        y_pred: (d0, ..., dn) ndarray or tensor
+        win: (n, ) int
+        device: torch.device
+
+    Returns:
+        out: float
+    """
     y_true = torch.as_tensor(y_true, dtype=torch.float32, device=device)
     y_pred = torch.as_tensor(y_pred, dtype=torch.float32, device=device)
 
@@ -67,16 +77,16 @@ def ncc(y_true, y_pred, *, win=None, device="cpu"):
     return -torch.mean(cc).numpy()
 
 
-def mse(y_1, y_2):
+def mse(y1, y2):
     """Mean squared error.
 
     Args:
-        y_1: (d0, ..., dn) ndarray
-        y_2: (d0, ..., dn) ndarray
+        y1: (d0, ..., dn) ndarray
+        y2: (d0, ..., dn) ndarray
 
     Returns:
         out: float
     """
-    y_1 = torch.as_tensor(y_1, dtype=torch.float32)
-    y_2 = torch.as_tensor(y_2, dtype=torch.float32)
-    return torch.mean((y_1 - y_2) ** 2).numpy()
+    y1 = torch.as_tensor(y1, dtype=torch.float32)
+    y2 = torch.as_tensor(y2, dtype=torch.float32)
+    return torch.mean((y1 - y2) ** 2).numpy()

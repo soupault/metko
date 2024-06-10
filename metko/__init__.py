@@ -1,5 +1,5 @@
 from ._agreement import bland_altman_naive
-# from ._distance_transf import distance_transform  # TODO:
+from ._distance_transf import distance_transform
 # from ._local_thickness import local_thickness  # TODO:
 from ._perceptual_loss import perceptual_loss
 from ._surface import (avg_surf_dist, avg_symm_surf_dist, rms_symm_surf_dist,
@@ -12,7 +12,7 @@ from ._volume import (confusion_matrix, dice_score, jaccard_score, precision_sco
 __all__ = [
     "bland_altman_naive",
 
-    # "distance_transform",  # TODO: review
+    "distance_transform",
     # "local_thickness",  # TODO: review
 
     "avg_surf_dist",

@@ -414,7 +414,6 @@ def volume_total(input_, class_vals, spacing_rw=(1, 1, 1), mode="straight"):
             if mode == "straight":
                 scores[sample_idx, class_idx] = _v_straight(sel_input_, spacing_rw)
             else:
-                # TODO:
-                raise ValueError()
+                raise NotImplementedError(f"Mode `{mode}` is not supported")
 
     return scores
