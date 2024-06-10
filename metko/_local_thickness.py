@@ -282,10 +282,10 @@ def local_thickness(input_, num_classes, stack_axis, spacing_rw=(1., 1., 1.),
             Pixel/voxel spacing in real world units, one per each spatial
             dimension of `input_`.
         skip_classes: None or tuple of ints
+
     Returns:
         out: (b, d0, ..., dn) ndarray
             Thickness map for each class in each batch sample.
-
     """
     if skip_classes is None:
         skip_classes = tuple()

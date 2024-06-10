@@ -1,12 +1,11 @@
-raise NotImplementedError("WIP")
-
+"""Many functions below are modified from
+https://github.com/ternaus/robot-surgery-segmentation"""
 import torch
 import numpy as np
 
 
 def confusion_matrix(input_, target, num_classes):
     """
-    https://github.com/ternaus/robot-surgery-segmentation/blob/master/validation.py
 
     Args:
         input_: (d0, ..., dn) ndarray or tensor
@@ -37,7 +36,6 @@ def confusion_matrix(input_, target, num_classes):
 
 def dice_score_from_cm(cm):
     """
-    https://github.com/ternaus/robot-surgery-segmentation/blob/master/validation.py
 
     Args:
         cm: (d, d) ndarray
@@ -63,7 +61,6 @@ def dice_score_from_cm(cm):
 
 def jaccard_score_from_cm(cm):
     """
-    https://github.com/ternaus/robot-surgery-segmentation/blob/master/validation.py
 
     Args:
         cm: (d, d) ndarray
@@ -184,7 +181,7 @@ def specificity_from_cm(cm):
     return scores
 
 
-def vol_sim_from_cm(cm):
+def volume_similarity_from_cm(cm):
     """
     https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4533825/
 
@@ -210,11 +207,7 @@ def vol_sim_from_cm(cm):
     return scores
 
 
-# ----------------------------------------------------------------------------
-
-
-def _template_score(func_score_from_cm, input_, target, num_classes,
-                    batch_avg, batch_weight, class_avg, class_weight):
+def _template_score(func_score_from_cm, input_, target, num_classes):
     """
 
     Args:
@@ -222,17 +215,9 @@ def _template_score(func_score_from_cm, input_, target, num_classes,
         target: (b, d0, ..., dn) ndarray or tensor
         num_classes: int
             Total number of classes.
-        batch_avg: bool
-            Whether to average over the batch dimension.
-        batch_weight: (b,) iterable
-            Batch samples importance coefficients.
-        class_avg: bool
-            Whether to average over the class dimension.
-        class_weight: (c,) iterable
-            Classes importance coefficients. Ignored when `class_avg` is False.
 
     Returns:
-        out: scalar if `class_avg` is True, (num_classes,) list otherwise
+        out: (b, c) ndarray
     """
     if torch.is_tensor(input_):
         num_samples = tuple(input_.size())[0]
@@ -245,19 +230,10 @@ def _template_score(func_score_from_cm, input_, target, num_classes,
                               target=target[sample_idx],
                               num_classes=num_classes)
         scores[sample_idx, :] = func_score_from_cm(cm)
-
-    if batch_avg:
-        scores = np.mean(scores, axis=0, keepdims=True)
-    if class_avg:
-        if class_weight is not None:
-            scores = scores * np.reshape(class_weight, (1, -1))
-        scores = np.mean(scores, axis=1, keepdims=True)
-    return np.squeeze(scores)
+    return scores
 
 
-def dice_score(input_, target, num_classes,
-               batch_avg=True, batch_weight=None,
-               class_avg=False, class_weight=None):
+def dice_score(input_, target, num_classes):
     """
 
     Args:
@@ -265,26 +241,14 @@ def dice_score(input_, target, num_classes,
         target: (b, d0, ..., dn) ndarray or tensor
         num_classes: int
             Total number of classes.
-        batch_avg: bool
-            Whether to average over the batch dimension.
-        batch_weight: (b,) iterable
-            Batch samples importance coefficients.
-        class_avg: bool
-            Whether to average over the class dimension.
-        class_weight: (c,) iterable
-            Classes importance coefficients. Ignored when `class_avg` is False.
 
     Returns:
-        out: scalar if `class_avg` is True, (num_classes,) list otherwise
+        out: (b, c) ndarray
     """
-    return _template_score(
-        dice_score_from_cm, input_, target, num_classes,
-        batch_avg, batch_weight, class_avg, class_weight)
+    return _template_score(dice_score_from_cm, input_, target, num_classes)
 
 
-def jaccard_score(input_, target, num_classes,
-                  batch_avg=True, batch_weight=None,
-                  class_avg=False, class_weight=None):
+def jaccard_score(input_, target, num_classes):
     """Jaccard similarity score, also known as Intersection-over-Union (IoU).
 
     Args:
@@ -292,26 +256,14 @@ def jaccard_score(input_, target, num_classes,
         target: (b, d0, ..., dn) ndarray or tensor
         num_classes: int
             Total number of classes.
-        batch_avg: bool
-            Whether to average over the batch dimension.
-        batch_weight: (b,) iterable
-            Batch samples importance coefficients.
-        class_avg: bool
-            Whether to average over the class dimension.
-        class_weight: (c,) iterable
-            Classes importance coefficients. Ignored when `class_avg` is False.
 
     Returns:
-        out: scalar if `class_avg` is True, (num_classes,) list otherwise
+        out: (b, c) ndarray
     """
-    return _template_score(
-        jaccard_score_from_cm, input_, target, num_classes,
-        batch_avg, batch_weight, class_avg, class_weight)
+    return _template_score(jaccard_score_from_cm, input_, target, num_classes)
 
 
-def precision_score(input_, target, num_classes,
-                    batch_avg=True, batch_weight=None,
-                    class_avg=False, class_weight=None):
+def precision_score(input_, target, num_classes):
     """
 
     Args:
@@ -319,26 +271,14 @@ def precision_score(input_, target, num_classes,
         target: (b, d0, ..., dn) ndarray or tensor
         num_classes: int
             Total number of classes.
-        batch_avg: bool
-            Whether to average over the batch dimension.
-        batch_weight: (b,) iterable
-            Batch samples importance coefficients.
-        class_avg: bool
-            Whether to average over the class dimension.
-        class_weight: (c,) iterable
-            Classes importance coefficients. Ignored when `class_avg` is False.
 
     Returns:
-        out: scalar if `class_avg` is True, (num_classes,) list otherwise
+        out: (b, c) ndarray
     """
-    return _template_score(
-        precision_from_cm, input_, target, num_classes,
-        batch_avg, batch_weight, class_avg, class_weight)
+    return _template_score(precision_from_cm, input_, target, num_classes)
 
 
-def recall_score(input_, target, num_classes,
-                 batch_avg=True, batch_weight=None,
-                 class_avg=False, class_weight=None):
+def recall_score(input_, target, num_classes):
     """
 
     Args:
@@ -346,26 +286,14 @@ def recall_score(input_, target, num_classes,
         target: (b, d0, ..., dn) ndarray or tensor
         num_classes: int
             Total number of classes.
-        batch_avg: bool
-            Whether to average over the batch dimension.
-        batch_weight: (b,) iterable
-            Batch samples importance coefficients.
-        class_avg: bool
-            Whether to average over the class dimension.
-        class_weight: (c,) iterable
-            Classes importance coefficients. Ignored when `class_avg` is False.
 
     Returns:
-        out: scalar if `class_avg` is True, (num_classes,) list otherwise
+        out: (b, c) ndarray
     """
-    return _template_score(
-        recall_from_cm, input_, target, num_classes,
-        batch_avg, batch_weight, class_avg, class_weight)
+    return _template_score(recall_from_cm, input_, target, num_classes)
 
 
-def sensitivity_score(input_, target, num_classes,
-                      batch_avg=True, batch_weight=None,
-                      class_avg=False, class_weight=None):
+def sensitivity_score(input_, target, num_classes):
     """
 
     Args:
@@ -373,26 +301,14 @@ def sensitivity_score(input_, target, num_classes,
         target: (b, d0, ..., dn) ndarray or tensor
         num_classes: int
             Total number of classes.
-        batch_avg: bool
-            Whether to average over the batch dimension.
-        batch_weight: (b,) iterable
-            Batch samples importance coefficients.
-        class_avg: bool
-            Whether to average over the class dimension.
-        class_weight: (c,) iterable
-            Classes importance coefficients. Ignored when `class_avg` is False.
 
     Returns:
-        out: scalar if `class_avg` is True, (num_classes,) list otherwise
+        out: (b, c) ndarray
     """
-    return _template_score(
-        sensitivity_from_cm, input_, target, num_classes,
-        batch_avg, batch_weight, class_avg, class_weight)
+    return _template_score(sensitivity_from_cm, input_, target, num_classes)
 
 
-def specificity_score(input_, target, num_classes,
-                      batch_avg=True, batch_weight=None,
-                      class_avg=False, class_weight=None):
+def specificity_score(input_, target, num_classes):
     """
 
     Args:
@@ -400,26 +316,14 @@ def specificity_score(input_, target, num_classes,
         target: (b, d0, ..., dn) ndarray or tensor
         num_classes: int
             Total number of classes.
-        batch_avg: bool
-            Whether to average over the batch dimension.
-        batch_weight: (b,) iterable
-            Batch samples importance coefficients.
-        class_avg: bool
-            Whether to average over the class dimension.
-        class_weight: (c,) iterable
-            Classes importance coefficients. Ignored when `class_avg` is False.
 
     Returns:
-        out: scalar if `class_avg` is True, (num_classes,) list otherwise
+        out: (b, c) ndarray
     """
-    return _template_score(
-        specificity_from_cm, input_, target, num_classes,
-        batch_avg, batch_weight, class_avg, class_weight)
+    return _template_score(specificity_from_cm, input_, target, num_classes)
 
 
-def volumetric_similarity(input_, target, num_classes,
-                          batch_avg=True, batch_weight=None,
-                          class_avg=False, class_weight=None):
+def volume_similarity(input_, target, num_classes):
     """
 
     Args:
@@ -427,44 +331,24 @@ def volumetric_similarity(input_, target, num_classes,
         target: (b, d0, ..., dn) ndarray or tensor
         num_classes: int
             Total number of classes.
-        batch_avg: bool
-            Whether to average over the batch dimension.
-        batch_weight: (b,) iterable
-            Batch samples importance coefficients.
-        class_avg: bool
-            Whether to average over the class dimension.
-        class_weight: (c,) iterable
-            Classes importance coefficients. Ignored when `class_avg` is False.
 
     Returns:
-        out: scalar if `class_avg` is True, (num_classes,) list otherwise
+        out: (b, c) ndarray
     """
-    return _template_score(
-        vol_sim_from_cm, input_, target, num_classes,
-        batch_avg, batch_weight, class_avg, class_weight)
+    return _template_score(volume_similarity_from_cm, input_, target, num_classes)
 
 
-def volume_error(input_, target, num_classes,
-                 batch_avg=True, batch_weight=None,
-                 class_avg=False, class_weight=None):
+def volume_error(input_, target, class_vals):
     """
 
     Args:
-        input_: (b, d0, ..., dn) ndarray or tensor
-        target: (b, d0, ..., dn) ndarray or tensor
-        num_classes: int
-            Total number of classes.
-        batch_avg: bool
-            Whether to average over the batch dimension.
-        batch_weight: (b,) iterable
-            Batch samples importance coefficients.
-        class_avg: bool
-            Whether to average over the class dimension.
-        class_weight: (c,) iterable
-            Classes importance coefficients. Ignored when `class_avg` is False.
+        input_: (b, d0, ..., dn) ndarray or tensor of int
+        target: (b, d0, ..., dn) ndarray or tensor of int
+        class_vals: (c, ) iterable
+            Intensity values corresponding to classes.
 
     Returns:
-        out: scalar if `class_avg` is True, (num_classes,) list otherwise
+        out: (b, c) ndarray
     """
 
     def _ve(i, t):
@@ -480,36 +364,30 @@ def volume_error(input_, target, num_classes,
     else:
         num_samples = input_.shape[0]
 
-    scores = np.zeros((num_samples, num_classes))
+    num_classes = len(class_vals)
+    scores = np.zeros((num_samples, num_classes), dtype=float)
     for sample_idx in range(num_samples):
-        for class_idx in range(num_classes):
-            sel_input_ = input_[sample_idx] == class_idx
-            sel_target = target[sample_idx] == class_idx
+        for class_idx, class_val in enumerate(class_vals):
+            sel_input_ = input_[sample_idx] == class_val
+            sel_target = target[sample_idx] == class_val
 
             scores[sample_idx, class_idx] = _ve(sel_input_, sel_target)
-
-    if batch_avg:
-        scores = np.mean(scores, axis=0, keepdims=True)
-    if class_avg:
-        if class_weight is not None:
-            scores = scores * np.reshape(class_weight, (1, -1))
-        scores = np.mean(scores, axis=1, keepdims=True)
     return np.squeeze(scores)
 
 
-def volume_total(input_, num_classes, spacing_rw=(1, 1, 1), mode="straight"):
+def volume_total(input_, class_vals, spacing_rw=(1, 1, 1), mode="straight"):
     """
 
     Args:
         input_: (b, d0, ..., dn) ndarray or tensor
-        num_classes: int
-            Total number of classes.
+        class_vals: (c, ) iterable
+            Intensity values corresponding to classes.
         spacing_rw: 3-tuple
             Pixel spacing in real world units, one per each spatial dimension of `input_`.
         mode: {"straight", "subpix"}
 
     Returns:
-        out: (b, num_classes) ndarray
+        out: (b, c) ndarray
             Total volume for each class in each batch sample.
     """
     def _v_straight(i, s):
@@ -527,10 +405,11 @@ def volume_total(input_, num_classes, spacing_rw=(1, 1, 1), mode="straight"):
     else:
         num_samples = input_.shape[0]
 
-    scores = np.zeros((num_samples, num_classes), float)
+    num_classes = len(class_vals)
+    scores = np.zeros((num_samples, num_classes), dtype=float)
     for sample_idx in range(num_samples):
-        for class_idx in range(num_classes):
-            sel_input_ = input_[sample_idx] == class_idx
+        for class_idx, class_val in enumerate(class_vals):
+            sel_input_ = input_[sample_idx] == class_val
 
             if mode == "straight":
                 scores[sample_idx, class_idx] = _v_straight(sel_input_, spacing_rw)

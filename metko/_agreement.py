@@ -1,5 +1,3 @@
-raise NotImplementedError("WIP")
-
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -8,11 +6,11 @@ def bland_altman_naive(m1, m2):
     """
 
     Args:
-        m1:
-        m2:
+        m1: (k, ) ndarray
+        m2: (k, ) ndarray
 
     Returns:
-
+        out: dict
     """
     if len(m1) != len(m2):
         raise ValueError("m1 does not have the same length as m2.")
@@ -21,19 +19,20 @@ def bland_altman_naive(m1, m2):
     diffs = m1 - m2
     mean_diff = np.mean(diffs)
     std_diff = np.std(diffs, axis=0)
-    return {"means": means, "diffs": diffs,
-            "mean_diff": mean_diff, "std_diff": std_diff}
+    out = {"means": means, "diffs": diffs,
+           "mean_diff": mean_diff, "std_diff": std_diff}
+    return out
 
 
 def bland_altman_extended(m1, m2):
     """
 
     Args:
-        m1:
-        m2:
+        m1: (k, ) ndarray
+        m2: (k, ) ndarray
 
     Returns:
-
+        out: dict
     """
     # TODO: bland_altman_extended
     raise NotImplementedError("WIP")
@@ -70,25 +69,25 @@ def bland_altman_plot(m1, m2,
         ax: matplotlib.axis, optional
             matplotlib axis object to plot on.
         scatter_kws: dict
-            Options to to style the scatter plot. Accepts any keywords for the
+            Options to style the scatter plot. Accepts any keywords for the
             matplotlib Axes.scatter plotting method
         mean_line_kws: dict
-            Options to to style the scatter plot. Accepts any keywords for the
+            Options to style the scatter plot. Accepts any keywords for the
             matplotlib Axes.axhline plotting method
         limit_lines_kws: dict
-            Options to to style the scatter plot. Accepts any keywords for the
+            Options to style the scatter plot. Accepts any keywords for the
             matplotlib Axes.axhline plotting method
 
     Returns:
         ax: matplotlib Axis object
     """
-
+    raise NotImplementedError("bland_altman_plot needs review")
     if len(m1) != len(m2):
         raise ValueError("m1 does not have the same length as m2.")
     if sd_limit < 0:
         raise ValueError("sd_limit ({}) is less than 0.".format(sd_limit))
 
-    means, diffs, mean_diff, std_diff = bland_altman(m1=m1, m2=m2)
+    means, diffs, mean_diff, std_diff = bland_altman_naive(m1=m1, m2=m2)
 
     if ax is None:
         ax = plt.gca()
@@ -147,11 +146,11 @@ def bland_altman_plot(m1, m2,
     return ax
 
 
-def taffe():
+def taffe_bias_precision():
     # TODO: Taffe method
-    raise NotImplemented()
+    raise NotImplemented("taffe_bias_precision")
 
 
 def taffe_bias_precision_plot():
     # TODO: taffe_bias_precision_plot
-    raise NotImplemented()
+    raise NotImplemented("taffe_bias_precision_plot")

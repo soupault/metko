@@ -1,86 +1,82 @@
-raise NotImplementedError("WIP")
-
+import math
 import numpy as np
-from scipy import stats
-import sklearn
+
+import torch
+import torch.nn.functional as F
 
 
-def cohen_d(d1, d2):
-    """
-    https://machinelearningmastery.com/effect-size-measures-in-python/
-    """
-    # calculate the size of samples
-    n1, n2 = len(d1), len(d2)
-    # calculate the variance of the samples
-    s1, s2 = np.var(d1, ddof=1), np.var(d2, ddof=1)
-    # calculate the pooled standard deviation
-    s = np.sqrt(((n1 - 1) * s1 + (n2 - 1) * s2) / (n1 + n2 - 2))
-    # calculate the means of the samples
-    u1, u2 = np.mean(d1), np.mean(d2)
-    # calculate the effect size
-    return (u1 - u2) / s
+# Modified from https://github.com/voxelmorph/voxelmorph/blob/dev/voxelmorph/torch/losses.py
+def ncc(y_true, y_pred, *, win=None, device="cpu"):
+    """Local (over window) normalized cross correlation loss."""
+    y_true = torch.as_tensor(y_true, dtype=torch.float32, device=device)
+    y_pred = torch.as_tensor(y_pred, dtype=torch.float32, device=device)
+
+    y_true = y_true[None, None, ...]
+    y_pred = y_pred[None, None, ...]
+
+    i_i = y_true
+    j_i = y_pred
+
+    # get dimension of volume
+    # assumes i_i, j_i are sized [batch_size, *vol_shape, nb_feats]
+    ndims = len(list(i_i.size())) - 2
+    assert ndims in [1, 2, 3], "volumes should be 1 to 3 dimensions. found: %d" % ndims
+
+    # set window size
+    win = [9] * ndims if win is None else win
+
+    # compute filters
+    sum_filt = torch.ones([1, 1, *win]).to(device)
+
+    pad_no = math.floor(win[0] / 2)
+
+    if ndims == 1:
+        stride = (1, )
+        padding = (pad_no, )
+    elif ndims == 2:
+        stride = (1, 1)
+        padding = (pad_no, pad_no)
+    else:
+        stride = (1, 1, 1)
+        padding = (pad_no, pad_no, pad_no)
+
+    # get convolution function
+    conv_fn = getattr(F, 'conv%dd' % ndims)
+
+    # compute CC squares
+    i_2 = i_i * i_i
+    j_2 = j_i * j_i
+    ij = i_i * j_i
+
+    i_sum = conv_fn(i_i, sum_filt, stride=stride, padding=padding)
+    j_sum = conv_fn(j_i, sum_filt, stride=stride, padding=padding)
+    i_2_sum = conv_fn(i_2, sum_filt, stride=stride, padding=padding)
+    j_2_sum = conv_fn(j_2, sum_filt, stride=stride, padding=padding)
+    ij_sum = conv_fn(ij, sum_filt, stride=stride, padding=padding)
+
+    win_size = np.prod(win)
+    u_i = i_sum / win_size
+    u_j = j_sum / win_size
+
+    cross = ij_sum - u_j * i_sum - u_i * j_sum + u_i * u_j * win_size
+    i_var = i_2_sum - 2 * u_i * i_sum + u_i * u_i * win_size
+    j_var = j_2_sum - 2 * u_j * j_sum + u_j * u_j * win_size
+
+    cc = cross * cross / (i_var * j_var + 1e-5)
+
+    return -torch.mean(cc).numpy()
 
 
-def cohen_d_var(d, n1, n2):
-    """
-    https://trendingsideways.com/the-cohens-d-formula
-    """
-    m1 = (n1 + n2) / (n1 * n2) + d ** 2 / (2 * (n1 + n2 - 2))
-    m2 = (n1 + n2) / (n1 + n2 - 2)
-    v = m1 * m2
-    return v
-
-
-def correlation(m1, m2):
-    """
+def mse(y_1, y_2):
+    """Mean squared error.
 
     Args:
-        m1:
-        m2:
+        y_1: (d0, ..., dn) ndarray
+        y_2: (d0, ..., dn) ndarray
 
     Returns:
-
+        out: float
     """
-    r2 = stats.pearsonr(m1, m2)[0] ** 2
-    return {"r2": r2}
-
-
-def linreg(x, y):
-    """
-
-    Args:
-        x:
-        y:
-
-    Returns:
-
-    """
-    tmp = stats.linregress(x, y)
-    return {"slope": tmp[0],
-            "intercept": tmp[1],
-            "rvalue": tmp[2],
-            "r2": tmp[2] ** 2,
-            "pvalue": tmp[3],
-            "stderr": tmp[4]}
-
-
-def odds_ratio(x, y):
-    """
-
-    Args:
-        x: (num_samples, num_features) ndarray
-        y: (num_samples, ) ndarray of bool
-
-    Returns:
-        odds_ratio: float
-        pvalue: float
-    """
-    clf = sklearn.linear_model.LogisticRegression(penalty="none",
-                                                  class_weight="balanced",
-                                                  solver="newton-cg")
-    clf.fit(x, y)
-    y_pred = clf.predict(x)
-
-    cm = sklearn.metrics.confusion_matrix(y, y_pred)
-    odds_ratio, pvalue = stats.fisher_exact(cm)
-    return odds_ratio, pvalue
+    y_1 = torch.as_tensor(y_1, dtype=torch.float32)
+    y_2 = torch.as_tensor(y_2, dtype=torch.float32)
+    return torch.mean((y_1 - y_2) ** 2).numpy()

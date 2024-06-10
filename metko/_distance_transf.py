@@ -1,5 +1,6 @@
 raise NotImplementedError("WIP")
 
+
 import numpy as np
 import scipy.ndimage as ndi
 import torch
@@ -15,11 +16,12 @@ def distance_transform(input_, num_classes, spacing_rw=(1., 1., 1.), skip_classe
         spacing_rw: 3-tuple
             Pixel spacing in real world units, one per each spatial dimension of `input_`.
         skip_classes: None or tuple of ints
+
     Returns:
         out: (b, d0, ..., dn) ndarray
             Thickness map for each class in each batch sample.
-
     """
+
     if skip_classes is None:
         skip_classes = tuple()
 

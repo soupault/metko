@@ -11,19 +11,19 @@ authors = [
 description = "Toolkit for comparison of methods and measurements"
 readme = "README.md"
 requires-python = ">=3.9"
-dependencies = [
-    "numpy",
-    "scipy",
-    "scikit-learn",
-    "matplotlib",
-    "numba",
-    "pytorch-lts",
-]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+#dependencies = [
+#    "numpy",
+#    "scipy",
+#    "scikit-learn",
+#    "matplotlib",
+#    "numba",
+#    "pytorch",
+#]
 
 [project.urls]
 "Homepage" = "https://github.com/soupault/metko"
