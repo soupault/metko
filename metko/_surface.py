@@ -13,8 +13,6 @@
 # limitations under the License.
 """Module exposing surface distance based measures."""
 
-import logging
-
 import torch
 import numpy as np
 from scipy import ndimage
@@ -178,31 +176,21 @@ def _surf_dists(mask_gt, mask_pred, spacing_rw):
             "surfel_areas_pred": surfel_areas_pred}
 
 
-def avg_surf_dist(input_, target, num_classes, spacing_rw,
-                  batch_avg=True, batch_weight=None,
-                  class_avg=False, class_weight=None):
+def avg_surf_dist(input_, target, num_classes, spacing_rw):
     """Computes the average surface distance.
 
     Computes the average surface distances by correctly taking the area of each
     surface element into account.
 
     Args:
-        input_: (b, d0, d1, d2) ndarray or tensor
-        target: (b, d0, d1, d2) ndarray or tensor
+        input_: (d0, d1, d2) ndarray or torch.Tensor
+        target: (d0, d1, d2) ndarray or torch.Tensor
         num_classes: int
             Total number of classes.
         spacing_rw: 3-tuple
             Pixel spacing in real world units, one per each spatial dimension.
-        batch_avg: bool
-            Whether to average over the batch dimension.
-        batch_weight: (b,) iterable
-            Importance coefficients for batch samples.
-        class_avg: bool
-            Whether to average over the class dimension.
-        class_weight:
-            Importance coefficients for classes. Ignored when `class_avg` is False.
     Returns:
-        out: ([b,] [c,] 2) ndarray
+        out: (c, 2) ndarray
             The average distance (in real world units) from the ground truth
             surface to the predicted surface [..., 0] and vice versa [..., 1].
     """
@@ -225,66 +213,41 @@ def avg_surf_dist(input_, target, num_classes, spacing_rw,
     if torch.is_tensor(target):
         target = target.detach().to("cpu").numpy()
 
-    if input_.ndim != 4:
-        raise ValueError(f"`input_` is expected to have 4 dims, got {input_.ndim}")
-    if target.ndim != 4:
-        raise ValueError(f"`target` is expected to have 4 dims, got {target.ndim}")
-    if batch_weight is not None:
-        raise NotImplementedError(f"Custom `batch_weight` is not supported")
+    assert input_.ndim == 3
+    assert target.ndim == 3
 
-    num_samples = input_.shape[0]
+    scores = np.zeros((num_classes, 2))
+    for class_idx in range(num_classes):
+        sel_input_ = input_ == class_idx
+        sel_target = target == class_idx
 
-    scores = np.zeros((num_samples, num_classes, 2))
-    for sample_idx in range(num_samples):
-        for class_idx in range(num_classes):
-            sel_input_ = input_[sample_idx] == class_idx
-            sel_target = target[sample_idx] == class_idx
-
-            if not np.any(sel_input_) or not np.any(sel_target):
-                scores[sample_idx, class_idx, :] = np.nan
-            else:
-                tmp = _surf_dists(mask_gt=sel_input_,
-                                  mask_pred=sel_target,
-                                  spacing_rw=spacing_rw)
-                scores[sample_idx, class_idx, :] = _asd(tmp)
-
-    if batch_avg:
-        scores = np.mean(scores, axis=0, keepdims=True)
-    if class_avg:
-        if class_weight is not None:
-            scores = scores * np.reshape(class_weight, (1, -1))
-        scores = np.mean(scores, axis=1, keepdims=True)
-    return np.squeeze(scores)
+        if not np.any(sel_input_) or not np.any(sel_target):
+            scores[class_idx, :] = np.nan
+        else:
+            res = _surf_dists(mask_gt=sel_input_,
+                              mask_pred=sel_target,
+                              spacing_rw=spacing_rw)
+            scores[class_idx, :] = _asd(res)
+    return scores
 
 
-def avg_symm_surf_dist(input_, target, num_classes, spacing_rw,
-                       batch_avg=True, batch_weight=None,
-                       class_avg=False, class_weight=None):
+def avg_symm_surf_dist(input_, target, num_classes, spacing_rw):
     """Computes the average symmetric surface distance.
 
     Computes the average surface distances by correctly taking the area of each
     surface element into account.
 
     Args:
-        input_: (b, d0, d1, d2) ndarray or tensor
-        target: (b, d0, d1, d2) ndarray or tensor
+        input_: (d0, d1, d2) ndarray or torch.Tensor
+        target: (d0, d1, d2) ndarray or torch.Tensor
         num_classes: int
             Total number of classes.
         spacing_rw: 3-tuple
             Pixel spacing in real world units, one per each spatial dimension.
-        batch_avg: bool
-            Whether to average over the batch dimension.
-        batch_weight: (b,) iterable
-            Importance coefficients for batch samples.
-        class_avg: bool
-            Whether to average over the class dimension.
-        class_weight:
-            Importance coefficients for classes. Ignored when `class_avg` is False.
     Returns:
-        out: ([b,] [c,] 1) ndarray
+        out: (c, 1) ndarray
             The average symmetric surface distance (in real world units).
     """
-
     def _assd(surface_distances):
         distances_gt_to_pred = surface_distances["distances_gt_to_pred"]
         distances_pred_to_gt = surface_distances["distances_pred_to_gt"]
@@ -301,66 +264,41 @@ def avg_symm_surf_dist(input_, target, num_classes, spacing_rw,
     if torch.is_tensor(target):
         target = target.detach().to("cpu").numpy()
 
-    if input_.ndim != 4:
-        raise ValueError(f"`input_` is expected to have 4 dims, got {input_.ndim}")
-    if target.ndim != 4:
-        raise ValueError(f"`target` is expected to have 4 dims, got {target.ndim}")
-    if batch_weight is not None:
-        raise NotImplementedError(f"Custom `batch_weight` is not supported")
+    assert input_.ndim == 3
+    assert target.ndim == 3
 
-    num_samples = input_.shape[0]
+    scores = np.zeros((num_classes, ))
+    for class_idx in range(num_classes):
+        sel_input_ = input_ == class_idx
+        sel_target = target == class_idx
 
-    scores = np.zeros((num_samples, num_classes))
-    for sample_idx in range(num_samples):
-        for class_idx in range(num_classes):
-            sel_input_ = input_[sample_idx] == class_idx
-            sel_target = target[sample_idx] == class_idx
-
-            if not np.any(sel_input_) or not np.any(sel_target):
-                scores[sample_idx, class_idx] = np.nan
-            else:
-                tmp = _surf_dists(mask_gt=sel_input_,
-                                  mask_pred=sel_target,
-                                  spacing_rw=spacing_rw)
-                scores[sample_idx, class_idx] = _assd(tmp)
-
-    if batch_avg:
-        scores = np.mean(scores, axis=0, keepdims=True)
-    if class_avg:
-        if class_weight is not None:
-            scores = scores * np.reshape(class_weight, (1, -1))
-        scores = np.mean(scores, axis=1, keepdims=True)
-    return np.squeeze(scores)
+        if not np.any(sel_input_) or not np.any(sel_target):
+            scores[class_idx] = np.nan
+        else:
+            res = _surf_dists(mask_gt=sel_input_,
+                              mask_pred=sel_target,
+                              spacing_rw=spacing_rw)
+            scores[class_idx] = _assd(res)
+    return scores
 
 
-def rms_symm_surf_dist(input_, target, num_classes, spacing_rw,
-                       batch_avg=True, batch_weight=None,
-                       class_avg=False, class_weight=None):
+def rms_symm_surf_dist(input_, target, num_classes, spacing_rw):
     """Computes the root mean square symmetric surface distance.
 
     Computes the root mean square symmetric surface distances by correctly taking
     the area of each surface element into account.
 
     Args:
-        input_: (b, d0, d1, d2) ndarray or tensor
-        target: (b, d0, d1, d2) ndarray or tensor
+        input_: (d0, d1, d2) ndarray or torch.Tensor
+        target: (d0, d1, d2) ndarray or torch.Tensor
         num_classes: int
             Total number of classes.
         spacing_rw: 3-tuple
             Pixel spacing in real world units, one per each spatial dimension.
-        batch_avg: bool
-            Whether to average over the batch dimension.
-        batch_weight: (b,) iterable
-            Importance coefficients for batch samples.
-        class_avg: bool
-            Whether to average over the class dimension.
-        class_weight:
-            Importance coefficients for classes. Ignored when `class_avg` is False.
     Returns:
-        out: ([b,] [c,] 1) ndarray
+        out: (c, 1) ndarray
             The root mean square symmetric surface distance (in real world units).
     """
-
     def _rmsssd(surface_distances):
         distances_gt_to_pred = surface_distances["distances_gt_to_pred"]
         distances_pred_to_gt = surface_distances["distances_pred_to_gt"]
@@ -377,41 +315,25 @@ def rms_symm_surf_dist(input_, target, num_classes, spacing_rw,
     if torch.is_tensor(target):
         target = target.detach().to("cpu").numpy()
 
-    if input_.ndim != 4:
-        raise ValueError(f"`input_` is expected to have 4 dims, got {input_.ndim}")
-    if target.ndim != 4:
-        raise ValueError(f"`target` is expected to have 4 dims, got {target.ndim}")
-    if batch_weight is not None:
-        raise NotImplementedError(f"Custom `batch_weight` is not supported")
+    assert input_.ndim == 3
+    assert target.ndim == 3
 
-    num_samples = input_.shape[0]
+    scores = np.zeros((num_classes, ))
+    for class_idx in range(num_classes):
+        sel_input_ = input_ == class_idx
+        sel_target = target == class_idx
 
-    scores = np.zeros((num_samples, num_classes))
-    for sample_idx in range(num_samples):
-        for class_idx in range(num_classes):
-            sel_input_ = input_[sample_idx] == class_idx
-            sel_target = target[sample_idx] == class_idx
-
-            if not np.any(sel_input_) or not np.any(sel_target):
-                scores[sample_idx, class_idx] = np.nan
-            else:
-                tmp = _surf_dists(mask_gt=sel_input_,
-                                  mask_pred=sel_target,
-                                  spacing_rw=spacing_rw)
-                scores[sample_idx, class_idx] = _rmsssd(tmp)
-
-    if batch_avg:
-        scores = np.mean(scores, axis=0, keepdims=True)
-    if class_avg:
-        if class_weight is not None:
-            scores = scores * np.reshape(class_weight, (1, -1))
-        scores = np.mean(scores, axis=1, keepdims=True)
-    return np.squeeze(scores)
+        if not np.any(sel_input_) or not np.any(sel_target):
+            scores[class_idx] = np.nan
+        else:
+            res = _surf_dists(mask_gt=sel_input_,
+                              mask_pred=sel_target,
+                              spacing_rw=spacing_rw)
+            scores[class_idx] = _rmsssd(res)
+    return scores
 
 
-def robust_hausdorff_dist(input_, target, num_classes, spacing_rw, percent,
-                          batch_avg=True, batch_weight=None,
-                          class_avg=False, class_weight=None):
+def robust_hausdorff_dist(input_, target, num_classes, spacing_rw, percent):
     """Computes the robust Hausdorff distance.
 
     Computes the robust Hausdorff distance. "Robust", because it uses the
@@ -420,28 +342,19 @@ def robust_hausdorff_dist(input_, target, num_classes, spacing_rw, percent,
     into account.
 
     Args:
-        input_: (b, d0, d1, d2) ndarray or tensor
-        target: (b, d0, d1, d2) ndarray or tensor
+        input_: (d0, d1, d2) ndarray or torch.Tensor
+        target: (d0, d1, d2) ndarray or torch.Tensor
         num_classes: int
             Total number of classes.
         spacing_rw: 3-tuple
             Pixel spacing in real world units, one per each spatial dimension.
         percent: float [0:100]
             Percentile of the surface distances to consider.
-        batch_avg: bool
-            Whether to average over the batch dimension.
-        batch_weight: (b,) iterable
-            Importance coefficients for batch samples.
-        class_avg: bool
-            Whether to average over the class dimension.
-        class_weight:
-            Importance coefficients for classes. Ignored when `class_avg` is False.
 
     Returns:
-        out: ([b,] [c,] 1) ndarray
+        out: (c, 1) ndarray
             The robust Hausdorff distance in real world units.
     """
-
     def _rh(surface_distances, percent):
         distances_gt_to_pred = surface_distances["distances_gt_to_pred"]
         distances_pred_to_gt = surface_distances["distances_pred_to_gt"]
@@ -471,41 +384,25 @@ def robust_hausdorff_dist(input_, target, num_classes, spacing_rw, percent,
     if torch.is_tensor(target):
         target = target.detach().to("cpu").numpy()
 
-    if input_.ndim != 4:
-        raise ValueError(f"`input_` is expected to have 4 dims, got {input_.ndim}")
-    if target.ndim != 4:
-        raise ValueError(f"`target` is expected to have 4 dims, got {target.ndim}")
-    if batch_weight is not None:
-        raise NotImplementedError(f"Custom `batch_weight` is not supported")
+    assert input_.ndim == 3
+    assert target.ndim == 3
 
-    num_samples = input_.shape[0]
+    scores = np.zeros((num_classes, ))
+    for class_idx in range(num_classes):
+        sel_input_ = input_ == class_idx
+        sel_target = target == class_idx
 
-    scores = np.zeros((num_samples, num_classes))
-    for sample_idx in range(num_samples):
-        for class_idx in range(num_classes):
-            sel_input_ = input_[sample_idx] == class_idx
-            sel_target = target[sample_idx] == class_idx
-
-            if not np.any(sel_input_) or not np.any(sel_target):
-                scores[sample_idx, class_idx] = np.nan
-            else:
-                tmp = _surf_dists(mask_gt=sel_input_,
-                                  mask_pred=sel_target,
-                                  spacing_rw=spacing_rw)
-                scores[sample_idx, class_idx] = _rh(tmp, percent=percent)
-
-    if batch_avg:
-        scores = np.mean(scores, axis=0, keepdims=True)
-    if class_avg:
-        if class_weight is not None:
-            scores = scores * np.reshape(class_weight, (1, -1))
-        scores = np.mean(scores, axis=1, keepdims=True)
-    return np.squeeze(scores)
+        if not np.any(sel_input_) or not np.any(sel_target):
+            scores[class_idx] = np.nan
+        else:
+            res = _surf_dists(mask_gt=sel_input_,
+                              mask_pred=sel_target,
+                              spacing_rw=spacing_rw)
+            scores[class_idx] = _rh(res, percent=percent)
+    return scores
 
 
-def surf_overlap_at_tol(input_, target, num_classes, spacing_rw, tolerance_rw,
-                        batch_avg=True, batch_weight=None,
-                        class_avg=False, class_weight=None):
+def surf_overlap_at_tol(input_, target, num_classes, spacing_rw, tolerance_rw):
     """Computes the overlap of the surfaces at a specified tolerance.
 
     Computes the overlap of the ground truth surface with the predicted surface
@@ -514,8 +411,8 @@ def surf_overlap_at_tol(input_, target, num_classes, spacing_rw, tolerance_rw,
     computed by correctly taking the area of each surface element into account.
 
     Args:
-        input_: (b, d0, d1, d2) ndarray or tensor
-        target: (b, d0, d1, d2) ndarray or tensor
+        input_: (d0, d1, d2) ndarray or torch.Tensor
+        target: (d0, d1, d2) ndarray or torch.Tensor
         num_classes: int
             Total number of classes.
         spacing_rw: 3-tuple
@@ -523,21 +420,12 @@ def surf_overlap_at_tol(input_, target, num_classes, spacing_rw, tolerance_rw,
         tolerance_rw: float
             Tolerance in real world units between the surfaces that is regarded
             as overlapping.
-        batch_avg: bool
-            Whether to average over the batch dimension.
-        batch_weight: (b,) iterable
-            Importance coefficients for batch samples.
-        class_avg: bool
-            Whether to average over the class dimension.
-        class_weight:
-            Importance coefficients for classes. Ignored when `class_avg` is False.
 
     Returns:
-        out: ([b,] [c,] 2) ndarray
+        out: (c, 2) ndarray
             The overlap fraction (0.0 - 1.0) of the ground truth surface with
             the predicted surface [..., 0] and vice versa [..., 1].
     """
-
     def _soat(surface_distances, tolerance_rw):
         distances_gt_to_pred = surface_distances["distances_gt_to_pred"]
         distances_pred_to_gt = surface_distances["distances_pred_to_gt"]
@@ -556,42 +444,26 @@ def surf_overlap_at_tol(input_, target, num_classes, spacing_rw, tolerance_rw,
     if torch.is_tensor(target):
         target = target.detach().to("cpu").numpy()
 
-    if input_.ndim != 4:
-        raise ValueError(f"`input_` is expected to have 4 dims, got {input_.ndim}")
-    if target.ndim != 4:
-        raise ValueError(f"`target` is expected to have 4 dims, got {target.ndim}")
-    if batch_weight is not None:
-        raise NotImplementedError(f"Custom `batch_weight` is not supported")
+    assert input_.ndim == 3
+    assert target.ndim == 3
 
-    num_samples = input_.shape[0]
+    scores = np.zeros((num_classes, 2))
+    for class_idx in range(num_classes):
+        sel_input_ = input_ == class_idx
+        sel_target = target == class_idx
 
-    scores = np.zeros((num_samples, num_classes, 2))
-    for sample_idx in range(num_samples):
-        for class_idx in range(num_classes):
-            sel_input_ = input_[sample_idx] == class_idx
-            sel_target = target[sample_idx] == class_idx
+        if not np.any(sel_input_) or not np.any(sel_target):
+            scores[class_idx, :] = np.nan
+        else:
+            res = _surf_dists(mask_gt=sel_input_,
+                              mask_pred=sel_target,
+                              spacing_rw=spacing_rw)
+            scores[class_idx, :] = _soat(res, tolerance_rw=tolerance_rw)
 
-            if not np.any(sel_input_) or not np.any(sel_target):
-                scores[sample_idx, class_idx, :] = np.nan
-            else:
-                tmp = _surf_dists(mask_gt=sel_input_,
-                                  mask_pred=sel_target,
-                                  spacing_rw=spacing_rw)
-                scores[sample_idx, class_idx, :] = _soat(tmp,
-                                                         tolerance_rw=tolerance_rw)
-
-    if batch_avg:
-        scores = np.mean(scores, axis=0, keepdims=True)
-    if class_avg:
-        if class_weight is not None:
-            scores = scores * np.reshape(class_weight, (1, -1))
-        scores = np.mean(scores, axis=1, keepdims=True)
-    return np.squeeze(scores)
+    return scores
 
 
-def surf_dice_at_tol(input_, target, num_classes, spacing_rw, tolerance_rw,
-                     batch_avg=True, batch_weight=None,
-                     class_avg=False, class_weight=None):
+def surf_dice_at_tol(input_, target, num_classes, spacing_rw, tolerance_rw):
     """Computes the _surface_ Dice coefficient at a specified tolerance.
 
     Computes the _surface_ Dice coefficient at a specified tolerance. Not to be
@@ -602,8 +474,8 @@ def surf_dice_at_tol(input_, target, num_classes, spacing_rw, tolerance_rw,
     coefficient is in the range between 0.0 (no overlap) to 1.0 (perfect overlap).
 
     Args:
-        input_: (b, d0, d1, d2) ndarray or tensor
-        target: (b, d0, d1, d2) ndarray or tensor
+        input_: (d0, d1, d2) ndarray or torch.Tensor
+        target: (d0, d1, d2) ndarray or torch.Tensor
         num_classes: int
             Total number of classes.
         spacing_rw: 3-tuple
@@ -611,20 +483,11 @@ def surf_dice_at_tol(input_, target, num_classes, spacing_rw, tolerance_rw,
         tolerance_rw: float
             Tolerance in real world units between the surfaces that is regarded
             as overlapping.
-        batch_avg: bool
-            Whether to average over the batch dimension.
-        batch_weight: (b,) iterable
-            Importance coefficients for batch samples.
-        class_avg: bool
-            Whether to average over the class dimension.
-        class_weight:
-            Importance coefficients for classes. Ignored when `class_avg` is False.
 
     Returns:
-        out: ([b,] [c,] 1) ndarray
-            The surface DICE coefficient (0.0 - 1.0).
+        out: (c, 1) ndarray
+            The surface Dice coefficient (0.0 - 1.0).
     """
-
     def _sdat(surface_distances, tolerance_rw):
         distances_gt_to_pred = surface_distances["distances_gt_to_pred"]
         distances_pred_to_gt = surface_distances["distances_pred_to_gt"]
@@ -641,31 +504,16 @@ def surf_dice_at_tol(input_, target, num_classes, spacing_rw, tolerance_rw,
     if torch.is_tensor(target):
         target = target.detach().to("cpu").numpy()
 
-    if input_.ndim != 4:
-        raise ValueError(f"`input_` is expected to have 4 dims, got {input_.ndim}")
-    if target.ndim != 4:
-        raise ValueError(f"`target` is expected to have 4 dims, got {target.ndim}")
-    if batch_weight is not None:
-        raise NotImplementedError(f"Custom `batch_weight` is not supported")
+    assert input_.ndim == 3
+    assert target.ndim == 3
 
-    num_samples = input_.shape[0]
+    scores = np.zeros((num_classes, ))
+    for class_idx in range(num_classes):
+        sel_input_ = input_ == class_idx
+        sel_target = target == class_idx
 
-    scores = np.zeros((num_samples, num_classes))
-    for sample_idx in range(num_samples):
-        for class_idx in range(num_classes):
-            sel_input_ = input_[sample_idx] == class_idx
-            sel_target = target[sample_idx] == class_idx
-
-            tmp = _surf_dists(mask_gt=sel_input_,
-                              mask_pred=sel_target,
-                              spacing_rw=spacing_rw)
-            scores[sample_idx, class_idx] = _sdat(tmp,
-                                                  tolerance_rw=tolerance_rw)
-
-    if batch_avg:
-        scores = np.mean(scores, axis=0, keepdims=True)
-    if class_avg:
-        if class_weight is not None:
-            scores = scores * np.reshape(class_weight, (1, -1))
-        scores = np.mean(scores, axis=1, keepdims=True)
-    return np.squeeze(scores)
+        res = _surf_dists(mask_gt=sel_input_,
+                          mask_pred=sel_target,
+                          spacing_rw=spacing_rw)
+        scores[class_idx] = _sdat(res, tolerance_rw=tolerance_rw)
+    return scores

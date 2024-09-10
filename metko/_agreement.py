@@ -6,14 +6,16 @@ def bland_altman_naive(m1, m2):
     """
 
     Args:
-        m1: (k, ) ndarray
-        m2: (k, ) ndarray
+        m1: (k, ) ndarray or list
+        m2: (k, ) ndarray or list
 
     Returns:
         out: dict
     """
     if len(m1) != len(m2):
         raise ValueError("m1 does not have the same length as m2.")
+    m1 = np.asarray(m1)
+    m2 = np.asarray(m2)
 
     means = np.mean([m1, m2], axis=0)
     diffs = m1 - m2
@@ -38,25 +40,19 @@ def bland_altman_extended(m1, m2):
     raise NotImplementedError("WIP")
 
 
-def bland_altman_plot(m1, m2,
-                      *,
-                      sd_limit=1.96,
-                      ax=None,
-                      scatter_kws=None,
-                      mean_line_kws=None,
-                      limit_lines_kws=None,
-                      xlabel=None,
-                      ylabel=None,
-                      ):
+def bland_altman_plot(m1, m2, *, sd_limit=1.96, scatter_kws=None,
+                      mean_line_kws=None, limit_lines_kws=None,
+                      xlabel="Mean", ylabel="Difference"):
     """Bland-Altman Plot.
 
     A Bland-Altman plot is a graphical method to analyze the differences
-    between two methods of measurement. The mean of the measures is plotted
-    against their difference.
+    between two methods of measurement -- m1 and m2. The mean of the measures
+    is plotted against their difference.
 
     Args:
-        m1, m2: pandas Series or array-like
-        sd_limit : float, default 1.96
+        m1: ndarray or list
+        m2: ndarray or list
+        sd_limit : float
             The limit of agreements expressed in terms of the standard deviation of
             the differences. If `md` is the mean of the differences, and `sd` is
             the standard deviation of those differences, then the limits of
@@ -65,32 +61,28 @@ def bland_altman_plot(m1, m2,
             The default of 1.96 will produce 95% confidence intervals for the means
             of the differences.
             If sd_limit = 0, no limits will be plotted, and the ylimit of the plot
-            defaults to 3 standard deviatons on either side of the mean.
-        ax: matplotlib.axis, optional
-            matplotlib axis object to plot on.
+            defaults to 3 standard deviations on either side of the mean.
         scatter_kws: dict
-            Options to style the scatter plot. Accepts any keywords for the
-            matplotlib Axes.scatter plotting method
+            Options to style the scatter plot. Passed to Axes.scatter.
         mean_line_kws: dict
-            Options to style the scatter plot. Accepts any keywords for the
-            matplotlib Axes.axhline plotting method
+            Options to style the mean line plot. Passed to Axes.axhline.
         limit_lines_kws: dict
-            Options to style the scatter plot. Accepts any keywords for the
-            matplotlib Axes.axhline plotting method
+            Options to style the limit lines. Passed to Axes.axhline.
+        xlabel: str
+        ylabel: str
 
     Returns:
-        ax: matplotlib Axis object
+        fig: matplotlib Figure
+        ax: matplotlib Axis
     """
-    raise NotImplementedError("bland_altman_plot needs review")
-    if len(m1) != len(m2):
-        raise ValueError("m1 does not have the same length as m2.")
     if sd_limit < 0:
         raise ValueError("sd_limit ({}) is less than 0.".format(sd_limit))
 
-    means, diffs, mean_diff, std_diff = bland_altman_naive(m1=m1, m2=m2)
-
-    if ax is None:
-        ax = plt.gca()
+    ret = bland_altman_naive(m1=m1, m2=m2)
+    means = ret["means"]
+    diffs = ret["diffs"]
+    mean_diff = ret["mean_diff"]
+    std_diff = ret["std_diff"]
 
     scatter_kws = scatter_kws or {}
     if "s" not in scatter_kws:
@@ -107,10 +99,11 @@ def bland_altman_plot(m1, m2,
     if 'linestyle' not in limit_lines_kws:
         kws['linestyle'] = ':'
 
+    fig, ax = plt.subplots()
+    # Measurement pairs
     ax.scatter(means, diffs, **scatter_kws)
-    ax.axhline(mean_diff, **mean_line_kws)  # draw mean line
-
-    # Annotate mean line with mean difference
+    # Mean line annotated with mean difference
+    ax.axhline(mean_diff, **mean_line_kws)
     ax.annotate('mean diff:\n{}'.format(np.round(mean_diff, 2)),
                 xy=(0.99, 0.55),
                 horizontalalignment='right',
@@ -134,16 +127,17 @@ def bland_altman_plot(m1, m2,
                     xy=(0.99, 0.80),
                     horizontalalignment='right',
                     xycoords='axes fraction')
-
     elif sd_limit == 0:
         half_ylim = 3 * std_diff
         ax.set_ylim(mean_diff - half_ylim,
                     mean_diff + half_ylim)
+    else:
+        raise ValueError("sd_limit is less than 0.")
 
-    ax.set_ylabel(ylabel or 'Difference')
-    ax.set_xlabel(xlabel or 'Means')
+    ax.set_ylabel(ylabel)
+    ax.set_xlabel(xlabel)
     plt.tight_layout()
-    return ax
+    return fig, ax
 
 
 def taffe_bias_precision():
