@@ -5,11 +5,11 @@ import numpy as np
 
 
 def confusion_matrix(input_, target, num_classes):
-    """
+    """Construct a confusion matrix from a pair of arrays.
 
     Args:
-        input_: (d0, ..., dn) ndarray or tensor
-        target: (d0, ..., dn) ndarray or tensor
+        input_: (d0, ..., dn) ndarray or torch.Tensor of int
+        target: (d0, ..., dn) ndarray or torch.Tensor of int
         num_classes: int
             Total number of classes.
 
@@ -34,17 +34,20 @@ def confusion_matrix(input_, target, num_classes):
     return cm.astype(np.uint32)
 
 
-def dice_score_from_cm(cm):
-    """
+def dice_score(input_, target, num_classes):
+    """Dice score.
 
     Args:
-        cm: (d, d) ndarray
-            Confusion matrix.
-    
+        input_: (d0, ..., dn) ndarray or torch.Tensor of int
+        target: (d0, ..., dn) ndarray or torch.Tensor of int
+        num_classes: int
+            Total number of classes.
     Returns:
-        out: (d, ) list
-            List of class Dice scores.
+        out: (c, ) list
+            Class-wise Dice scores.
     """
+    cm = confusion_matrix(input_=input_, target=target, num_classes=num_classes)
+
     scores = []
     for index in range(cm.shape[0]):
         true_positives = cm[index, index]
@@ -59,17 +62,20 @@ def dice_score_from_cm(cm):
     return scores
 
 
-def jaccard_score_from_cm(cm):
-    """
+def jaccard_score(input_, target, num_classes):
+    """Jaccard score.
 
     Args:
-        cm: (d, d) ndarray
-            Confusion matrix.
-    
+        input_: (d0, ..., dn) ndarray or torch.Tensor of int
+        target: (d0, ..., dn) ndarray or torch.Tensor of int
+        num_classes: int
+            Total number of classes.
     Returns:
-        out: (d, ) list
-            List of class IoU scores.
+        out: (c, ) list
+            Class-wise IoU scores.
     """
+    cm = confusion_matrix(input_=input_, target=target, num_classes=num_classes)
+
     scores = []
     for index in range(cm.shape[0]):
         true_positives = cm[index, index]
@@ -84,17 +90,21 @@ def jaccard_score_from_cm(cm):
     return scores
 
 
-def precision_from_cm(cm):
-    """
+def precision_score(input_, target, num_classes):
+    """Precision score.
 
     Args:
-        cm: (d, d) ndarray
-            Confusion matrix.
+        input_: (d0, ..., dn) ndarray or torch.Tensor of int
+        target: (d0, ..., dn) ndarray or torch.Tensor of int
+        num_classes: int
+            Total number of classes.
 
     Returns:
         out: (d, ) list
-            List of class precision scores.
+            Class-wise precision scores.
     """
+    cm = confusion_matrix(input_=input_, target=target, num_classes=num_classes)
+
     scores = []
     for index in range(cm.shape[0]):
         true_positives = cm[index, index]
@@ -108,17 +118,21 @@ def precision_from_cm(cm):
     return scores
 
 
-def recall_from_cm(cm):
-    """
+def recall_score(input_, target, num_classes):
+    """Recall score.
 
     Args:
-        cm: (d, d) ndarray
-            Confusion matrix.
+        input_: (d0, ..., dn) ndarray or torch.Tensor of int
+        target: (d0, ..., dn) ndarray or torch.Tensor of int
+        num_classes: int
+            Total number of classes.
     
     Returns:
         out: (d, ) list
-            List of class recall scores.
+            Class-wise recall scores.
     """
+    cm = confusion_matrix(input_=input_, target=target, num_classes=num_classes)
+
     scores = []
     for index in range(cm.shape[0]):
         true_positives = cm[index, index]
@@ -132,17 +146,21 @@ def recall_from_cm(cm):
     return scores
 
 
-def sensitivity_from_cm(cm):
-    """
+def sensitivity_score(input_, target, num_classes):
+    """Sensitivity score.
 
     Args:
-        cm: (d, d) ndarray
-            Confusion matrix.
+        input_: (d0, ..., dn) ndarray or torch.Tensor of int
+        target: (d0, ..., dn) ndarray or torch.Tensor of int
+        num_classes: int
+            Total number of classes.
 
     Returns:
         out: (d, ) list
-            List of class sensitivity scores.
+            Class-wise sensitivity scores.
     """
+    cm = confusion_matrix(input_=input_, target=target, num_classes=num_classes)
+
     scores = []
     for index in range(cm.shape[0]):
         true_positives = cm[index, index]
@@ -156,17 +174,21 @@ def sensitivity_from_cm(cm):
     return scores
 
 
-def specificity_from_cm(cm):
-    """
+def specificity_score(input_, target, num_classes):
+    """Specificity score.
 
     Args:
-        cm: (d, d) ndarray
-            Confusion matrix.
+        input_: (d0, ..., dn) ndarray or torch.Tensor of int
+        target: (d0, ..., dn) ndarray or torch.Tensor of int
+        num_classes: int
+            Total number of classes.
 
     Returns:
         out: (d, ) list
-            List of class sensitivity scores.
+            Class-wise sensitivity scores.
     """
+    cm = confusion_matrix(input_=input_, target=target, num_classes=num_classes)
+
     scores = []
     for index in range(cm.shape[0]):
         true_positives = cm[index, index]
@@ -181,18 +203,22 @@ def specificity_from_cm(cm):
     return scores
 
 
-def volume_similarity_from_cm(cm):
-    """
+def volume_similarity(input_, target, num_classes):
+    """Volume similarity score.
     https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4533825/
 
     Args:
-        cm: (d, d) ndarray
-            Confusion matrix.
+        input_: (d0, ..., dn) ndarray or torch.Tensor of int
+        target: (d0, ..., dn) ndarray or torch.Tensor of int
+        num_classes: int
+            Total number of classes.
 
     Returns:
         out: (d, ) list
-            List of class volumetric similarity scores.
+            Class-wise volumetric similarity scores.
     """
+    cm = confusion_matrix(input_=input_, target=target, num_classes=num_classes)
+
     scores = []
     for index in range(cm.shape[0]):
         true_positives = cm[index, index]
@@ -207,150 +233,18 @@ def volume_similarity_from_cm(cm):
     return scores
 
 
-def _template_score(func_score_from_cm, input_, target, num_classes):
-    """
-
-    Args:
-        input_: (b, d0, ..., dn) ndarray or tensor
-        target: (b, d0, ..., dn) ndarray or tensor
-        num_classes: int
-            Total number of classes.
-
-    Returns:
-        out: (b, c) ndarray
-    """
-    if torch.is_tensor(input_):
-        num_samples = tuple(input_.size())[0]
-    else:
-        num_samples = input_.shape[0]
-
-    scores = np.zeros((num_samples, num_classes))
-    for sample_idx in range(num_samples):
-        cm = confusion_matrix(input_=input_[sample_idx],
-                              target=target[sample_idx],
-                              num_classes=num_classes)
-        scores[sample_idx, :] = func_score_from_cm(cm)
-    return scores
-
-
-def dice_score(input_, target, num_classes):
-    """
-
-    Args:
-        input_: (b, d0, ..., dn) ndarray or tensor
-        target: (b, d0, ..., dn) ndarray or tensor
-        num_classes: int
-            Total number of classes.
-
-    Returns:
-        out: (b, c) ndarray
-    """
-    return _template_score(dice_score_from_cm, input_, target, num_classes)
-
-
-def jaccard_score(input_, target, num_classes):
-    """Jaccard similarity score, also known as Intersection-over-Union (IoU).
-
-    Args:
-        input_: (b, d0, ..., dn) ndarray or tensor
-        target: (b, d0, ..., dn) ndarray or tensor
-        num_classes: int
-            Total number of classes.
-
-    Returns:
-        out: (b, c) ndarray
-    """
-    return _template_score(jaccard_score_from_cm, input_, target, num_classes)
-
-
-def precision_score(input_, target, num_classes):
-    """
-
-    Args:
-        input_: (b, d0, ..., dn) ndarray or tensor
-        target: (b, d0, ..., dn) ndarray or tensor
-        num_classes: int
-            Total number of classes.
-
-    Returns:
-        out: (b, c) ndarray
-    """
-    return _template_score(precision_from_cm, input_, target, num_classes)
-
-
-def recall_score(input_, target, num_classes):
-    """
-
-    Args:
-        input_: (b, d0, ..., dn) ndarray or tensor
-        target: (b, d0, ..., dn) ndarray or tensor
-        num_classes: int
-            Total number of classes.
-
-    Returns:
-        out: (b, c) ndarray
-    """
-    return _template_score(recall_from_cm, input_, target, num_classes)
-
-
-def sensitivity_score(input_, target, num_classes):
-    """
-
-    Args:
-        input_: (b, d0, ..., dn) ndarray or tensor
-        target: (b, d0, ..., dn) ndarray or tensor
-        num_classes: int
-            Total number of classes.
-
-    Returns:
-        out: (b, c) ndarray
-    """
-    return _template_score(sensitivity_from_cm, input_, target, num_classes)
-
-
-def specificity_score(input_, target, num_classes):
-    """
-
-    Args:
-        input_: (b, d0, ..., dn) ndarray or tensor
-        target: (b, d0, ..., dn) ndarray or tensor
-        num_classes: int
-            Total number of classes.
-
-    Returns:
-        out: (b, c) ndarray
-    """
-    return _template_score(specificity_from_cm, input_, target, num_classes)
-
-
-def volume_similarity(input_, target, num_classes):
-    """
-
-    Args:
-        input_: (b, d0, ..., dn) ndarray or tensor
-        target: (b, d0, ..., dn) ndarray or tensor
-        num_classes: int
-            Total number of classes.
-
-    Returns:
-        out: (b, c) ndarray
-    """
-    return _template_score(volume_similarity_from_cm, input_, target, num_classes)
-
-
 def volume_error(input_, target, class_vals):
-    """
+    """Volume error score.
 
     Args:
-        input_: (b, d0, ..., dn) ndarray or tensor of int
-        target: (b, d0, ..., dn) ndarray or tensor of int
+        input_: (d0, ..., dn) ndarray or torch.Tensor of int
+        target: (d0, ..., dn) ndarray or torch.Tensor of int
         class_vals: (c, ) iterable
             Intensity values corresponding to classes.
 
     Returns:
-        out: (b, c) ndarray
+        out: (c, ) ndarray
     """
-
     def _ve(i, t):
         numer = 2 * np.count_nonzero(np.bitwise_xor(i, t))
         denom = np.count_nonzero(i) + np.count_nonzero(t)
@@ -359,27 +253,21 @@ def volume_error(input_, target, class_vals):
         else:
             return numer / denom
 
-    if torch.is_tensor(input_):
-        num_samples = tuple(input_.size())[0]
-    else:
-        num_samples = input_.shape[0]
-
     num_classes = len(class_vals)
-    scores = np.zeros((num_samples, num_classes), dtype=float)
-    for sample_idx in range(num_samples):
-        for class_idx, class_val in enumerate(class_vals):
-            sel_input_ = input_[sample_idx] == class_val
-            sel_target = target[sample_idx] == class_val
+    scores = np.zeros((num_classes, ), dtype=float)
+    for class_idx, class_val in enumerate(class_vals):
+        sel_input_ = input_ == class_val
+        sel_target = target == class_val
 
-            scores[sample_idx, class_idx] = _ve(sel_input_, sel_target)
-    return np.squeeze(scores)
+        scores[class_idx] = _ve(sel_input_, sel_target)
+    return scores
 
 
 def volume_total(input_, class_vals, spacing_rw=(1, 1, 1), mode="straight"):
-    """
+    """Total volume.
 
     Args:
-        input_: (b, d0, ..., dn) ndarray or tensor
+        input_: (d0, ..., dn) ndarray or tensor
         class_vals: (c, ) iterable
             Intensity values corresponding to classes.
         spacing_rw: 3-tuple
@@ -387,33 +275,26 @@ def volume_total(input_, class_vals, spacing_rw=(1, 1, 1), mode="straight"):
         mode: {"straight", "subpix"}
 
     Returns:
-        out: (b, c) ndarray
+        out: (c, ) ndarray
             Total volume for each class in each batch sample.
     """
     def _v_straight(i, s):
+        # Naive approach
         n = np.count_nonzero(i)
         vox = np.prod(s)
-        # Naive approach
         return vox * n
 
     def _v_subpix(i, s):
         # TODO: implement via surface elements volume (more accurate). See `surface`
         raise NotImplementedError()
 
-    if torch.is_tensor(input_):
-        num_samples = tuple(input_.size())[0]
-    else:
-        num_samples = input_.shape[0]
-
     num_classes = len(class_vals)
-    scores = np.zeros((num_samples, num_classes), dtype=float)
-    for sample_idx in range(num_samples):
-        for class_idx, class_val in enumerate(class_vals):
-            sel_input_ = input_[sample_idx] == class_val
+    scores = np.zeros((num_classes, ), dtype=float)
+    for class_idx, class_val in enumerate(class_vals):
+        sel_input_ = input_ == class_val
 
-            if mode == "straight":
-                scores[sample_idx, class_idx] = _v_straight(sel_input_, spacing_rw)
-            else:
-                raise NotImplementedError(f"Mode `{mode}` is not supported")
-
+        if mode == "straight":
+            scores[class_idx] = _v_straight(sel_input_, spacing_rw)
+        else:
+            raise NotImplementedError(f"Mode `{mode}` is not supported")
     return scores
