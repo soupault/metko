@@ -263,7 +263,7 @@ def volume_error(input_, target, class_vals):
     return scores
 
 
-def volume_total(input_, class_vals, spacing_rw=(1, 1, 1), mode="straight"):
+def volume_total(input_, class_vals, spacing_rw=(1., 1., 1.), mode="straight"):
     """Total volume.
 
     Args:

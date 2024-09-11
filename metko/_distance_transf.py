@@ -23,7 +23,7 @@ def distance_transform(input_, class_vals, spacing_rw=None):
         dims = input_.shape
     spacing_rw = spacing_rw or (1.,) * len(dims)
 
-    dt_map = np.zeros_like(dims, float)
+    dt_map = np.zeros_like(input_, float)
     for class_val in class_vals:
         sel_input_ = input_ == class_val
         dt_map_class = ndi.distance_transform_edt(sel_input_, sampling=spacing_rw)
