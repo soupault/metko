@@ -17,7 +17,7 @@ import torch
 import numpy as np
 from scipy import ndimage
 
-from ._surface_lut import neighbour_code_to_normals
+from ._surface_lut_2020 import neighbour_code_to_normals
 
 
 def _surf_dists(mask_gt, mask_pred, spacing_rw):
