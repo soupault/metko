@@ -7,7 +7,7 @@ import metko
 # def test_bland_altman():
 #     m1 = [1, 2, 3, 4, 5]
 #     m2 = [2, 3, 4, 5, 6]
-#     res = bland_altman_naive(m1, m2)
+#     res = bland_altman(m1, m2)
 #     assert res["mean_diff"] == 1
 
 

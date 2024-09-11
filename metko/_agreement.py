@@ -1,13 +1,16 @@
 import numpy as np
+from scipy import stats
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 
-def bland_altman_naive(m1, m2):
+def bland_altman(m1, m2, diff_mode="unit"):
     """
 
     Args:
         m1: (k, ) ndarray or list
         m2: (k, ) ndarray or list
+        diff_mode: {"unit", "percentage"}
 
     Returns:
         out: dict
@@ -19,6 +22,8 @@ def bland_altman_naive(m1, m2):
 
     means = np.mean([m1, m2], axis=0)
     diffs = m1 - m2
+    if diff_mode == "percentage":
+        diffs = diffs / means
     mean_diff = np.mean(diffs)
     std_diff = np.std(diffs, axis=0)
     out = {"means": means, "diffs": diffs,
@@ -26,23 +31,9 @@ def bland_altman_naive(m1, m2):
     return out
 
 
-def bland_altman_extended(m1, m2):
-    """
-
-    Args:
-        m1: (k, ) ndarray
-        m2: (k, ) ndarray
-
-    Returns:
-        out: dict
-    """
-    # TODO: bland_altman_extended
-    raise NotImplementedError("WIP")
-
-
 def bland_altman_plot(m1, m2, *, sd_limit=1.96, scatter_kws=None,
                       mean_line_kws=None, limit_lines_kws=None,
-                      xlabel="Mean", ylabel="Difference"):
+                      diff_mode="unit", regression_line=False):
     """Bland-Altman Plot.
 
     A Bland-Altman plot is a graphical method to analyze the differences
@@ -68,8 +59,10 @@ def bland_altman_plot(m1, m2, *, sd_limit=1.96, scatter_kws=None,
             Options to style the mean line plot. Passed to Axes.axhline.
         limit_lines_kws: dict
             Options to style the limit lines. Passed to Axes.axhline.
-        xlabel: str
-        ylabel: str
+        diff_mode: {"unit", "percentage"}
+            Express differences as units or proportionally to the measurement magnitude.
+        regression_line: bool
+            Whether to draw a regression line. Useful to detect proportional bias.
 
     Returns:
         fig: matplotlib Figure
@@ -78,12 +71,15 @@ def bland_altman_plot(m1, m2, *, sd_limit=1.96, scatter_kws=None,
     if sd_limit < 0:
         raise ValueError("sd_limit ({}) is less than 0.".format(sd_limit))
 
-    ret = bland_altman_naive(m1=m1, m2=m2)
+    ret = bland_altman(m1=m1, m2=m2, diff_mode=diff_mode)
     means = ret["means"]
     diffs = ret["diffs"]
     mean_diff = ret["mean_diff"]
     std_diff = ret["std_diff"]
 
+    # Configure plotting
+    xlabel = "Mean"
+    ylabel = "Difference" if diff_mode == "unit" else "Difference / mean, %"
     scatter_kws = scatter_kws or {}
     if "s" not in scatter_kws:
         scatter_kws["s"] = 20
@@ -99,6 +95,7 @@ def bland_altman_plot(m1, m2, *, sd_limit=1.96, scatter_kws=None,
     if 'linestyle' not in limit_lines_kws:
         kws['linestyle'] = ':'
 
+    # Construct plot
     fig, ax = plt.subplots()
     # Measurement pairs
     ax.scatter(means, diffs, **scatter_kws)
@@ -133,6 +130,10 @@ def bland_altman_plot(m1, m2, *, sd_limit=1.96, scatter_kws=None,
                     mean_diff + half_ylim)
     else:
         raise ValueError("sd_limit is less than 0.")
+
+    if regression_line:
+        ci = (stats.norm.cdf(sd_limit) - stats.norm.cdf(-sd_limit)) * 100
+        sns.regplot(x=means, y=diffs, scatter=False, ci=ci, ax=ax)
 
     ax.set_ylabel(ylabel)
     ax.set_xlabel(xlabel)

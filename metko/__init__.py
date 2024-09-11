@@ -1,4 +1,4 @@
-from ._agreement import bland_altman_naive, bland_altman_plot
+from ._agreement import bland_altman, bland_altman_plot
 from ._distance_transf import distance_transform
 # # from ._local_thickness import local_thickness  # TODO:
 # from ._perceptual_loss import perceptual_loss
@@ -10,7 +10,7 @@ from ._surface import (avg_surf_dist, avg_symm_surf_dist, rms_symm_surf_dist,
 
 
 __all__ = [
-    "bland_altman_naive",
+    "bland_altman",
     "bland_altman_plot",
 
     "distance_transform",
