@@ -122,9 +122,9 @@ def _surf_dists(mask_gt, mask_pred, spacing_rw):
                         [32, 16]],
                        [[8, 4],
                         [2, 1]]])
-    neighbour_code_map_gt = ndimage.filters.correlate(
+    neighbour_code_map_gt = ndimage.correlate(
         cropmask_gt.astype(np.uint8), kernel, mode="constant", cval=0)
-    neighbour_code_map_pred = ndimage.filters.correlate(
+    neighbour_code_map_pred = ndimage.correlate(
         cropmask_pred.astype(np.uint8), kernel, mode="constant", cval=0)
 
     # create masks with the surface voxels
@@ -135,13 +135,13 @@ def _surf_dists(mask_gt, mask_pred, spacing_rw):
     # compute the distance transform
     # (closest distance of each voxel to the surface voxels)
     if borders_gt.any():
-        distmap_gt = ndimage.morphology.distance_transform_edt(
+        distmap_gt = ndimage.distance_transform_edt(
             ~borders_gt, sampling=spacing_rw)
     else:
         distmap_gt = np.Inf * np.ones(borders_gt.shape)
 
     if borders_pred.any():
-        distmap_pred = ndimage.morphology.distance_transform_edt(
+        distmap_pred = ndimage.distance_transform_edt(
             ~borders_pred, sampling=spacing_rw)
     else:
         distmap_pred = np.Inf * np.ones(borders_pred.shape)

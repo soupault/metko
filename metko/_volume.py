@@ -31,7 +31,7 @@ def confusion_matrix(input_, target, num_classes):
         bins=(num_classes, num_classes),
         range=[(0, num_classes-1), (0, num_classes-1)]
     )
-    return cm.astype(np.uint32)
+    return cm.astype(np.int64)
 
 
 def dice_score(input_, target, num_classes):
