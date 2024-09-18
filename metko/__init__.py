@@ -1,6 +1,6 @@
 from ._agreement import bland_altman, bland_altman_plot
 from ._distance_transf import distance_transform
-# # from ._local_thickness import local_thickness  # TODO:
+from ._local_thickness import local_thickness, local_thickness_base
 # from ._perceptual_loss import perceptual_loss
 from ._surface_2020 import (avg_surf_dist, avg_symm_surf_dist, rms_symm_surf_dist,
                             robust_hausdorff_dist, surf_dice_at_tol, surf_overlap_at_tol)
@@ -15,7 +15,8 @@ __all__ = [
     "bland_altman_plot",
 
     "distance_transform",
-    # "local_thickness",  # TODO: review
+    "local_thickness",
+    "local_thickness_base",
 
     # TODO: explore 2024 version and update
     "avg_surf_dist",

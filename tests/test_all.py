@@ -115,3 +115,7 @@ def test_volume_total(ndim, spacing_rw):
 
     _ = metko.volume_total(input_=image, class_vals=class_vals,
                            spacing_rw=spacing_rw)
+
+
+# TODO: add tests for local_thickness - exec
+# TODO: add tests for local_thickness - numerical
