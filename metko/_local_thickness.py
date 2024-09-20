@@ -369,12 +369,12 @@ def local_thickness(input_, num_classes, stack_axis, spacing_rw=(1., 1., 1.),
         sel_input_ = input_ == class_idx
 
         if input_.ndim == 2:
-            th_map_class = _local_thickness(
+            th_map_class = local_thickness_base(
                 sel_input_, algorithm_2d="med2d_dist2d_lth2d",
                 spacing_rw=spacing_rw, stack_axis=stack_axis,
                 return_med_axis=False, return_distance=False)
         else:
-            th_map_class = _local_thickness(
+            th_map_class = local_thickness_base(
                 sel_input_, algorithm_3d="med2d_dist3d_lth3d",
                 spacing_rw=spacing_rw, stack_axis=stack_axis,
                 return_med_axis=False, return_distance=False)
