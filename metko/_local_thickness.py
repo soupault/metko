@@ -252,18 +252,17 @@ def local_thickness_base(mask, *, algorithm_2d=None, algorithm_3d=None,
                 sel_mask = mask[sel_idcs]
                 sel_spacing_rw = (list(spacing_rw[:stack_axis]) +
                                   list(spacing_rw[stack_axis+1:]))
-                sel_res = _local_thickness(sel_mask, algorithm_2d="med2d_dist2d_lth2d",
-                                           spacing_rw=sel_spacing_rw,
-                                           thickness_max_rw=thickness_max_rw,
-                                           return_med_axis=True, return_distance=True)
-                acc_out.append(sel_res[0] / 2)
+                sel_res = local_thickness_base(sel_mask, algorithm_2d="med2d_dist2d_lth2d",
+                                               spacing_rw=sel_spacing_rw,
+                                               thickness_max_rw=thickness_max_rw,
+                                               return_med_axis=True, return_distance=True)
+                acc_out.append(sel_res[0])
                 acc_med.append(sel_res[1])
                 acc_dist.append(sel_res[2])
 
-            out = np.stack(acc_out, axis=stack_axis)
+            out = np.stack(acc_out, axis=stack_axis)  # Is already twice the distance, no need to x2
             med_axis = np.stack(acc_med, axis=stack_axis)
             distance = np.stack(acc_dist, axis=stack_axis)
-            out = 2. * out  # Thickness is twice the distance to the closest surface point
 
         elif algorithm_3d == "med2d_dist2d_lth3d":
             if thickness_max_rw is not None:
