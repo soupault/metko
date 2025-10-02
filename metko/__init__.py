@@ -1,11 +1,11 @@
 from ._agreement import bland_altman, bland_altman_plot
 from ._distance_transf import distance_transform
 from ._local_thickness import local_thickness, local_thickness_base
-# from ._perceptual_loss import perceptual_loss
+# from ._perceptual_loss import perceptual_loss  # TODO: review and enable
 from ._surface_2020 import (avg_surf_dist, avg_symm_surf_dist, rms_symm_surf_dist,
                             robust_hausdorff_dist, surf_dice_at_tol, surf_overlap_at_tol)
-from ._volume import (confusion_matrix, dice_score, jaccard_score, precision_score,
-                      recall_score, sensitivity_score, specificity_score,
+from ._volume import (confusion_matrix, dice_score_from_cm, dice_score, jaccard_score,
+                      precision_score, recall_score, sensitivity_score, specificity_score,
                       volume_similarity, volume_error, volume_total)
 from ._wrappers import apply_batched
 
@@ -28,6 +28,7 @@ __all__ = [
 
     "confusion_matrix",
     "dice_score",
+    "dice_score_from_cm",
     "jaccard_score",
     "precision_score",
     "recall_score",
