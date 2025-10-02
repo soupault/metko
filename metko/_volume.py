@@ -34,6 +34,30 @@ def confusion_matrix(input_, target, num_classes):
     return cm.astype(np.int64)
 
 
+def dice_score_from_cm(cm):
+    """Dice score from confusion matrix.
+
+    Args:
+        cm: (c, c) ndarray
+            Confusion matrix.
+    Returns:
+        out: (c, ) list
+            Class-wise Dice scores.
+    """
+    scores = []
+    for index in range(cm.shape[0]):
+        true_positives = cm[index, index]
+        false_positives = cm[:, index].sum() - true_positives
+        false_negatives = cm[index, :].sum() - true_positives
+        denom = 2 * true_positives + false_positives + false_negatives
+        if denom == 0:
+            score = 0
+        else:
+            score = 2 * float(true_positives) / denom
+        scores.append(score)
+    return scores
+
+
 def dice_score(input_, target, num_classes):
     """Dice score.
 
