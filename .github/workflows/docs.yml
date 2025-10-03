@@ -32,7 +32,8 @@ jobs:
           python-version: '3.13'
 
       # Install all dependencies
-      - run: pip install -e .
+      # Use CPU version of torch and torchvision to speed up the CI
+      - run: pip install -e . --index-url https://download.pytorch.org/whl/cpu
       - run: pip install pdoc
       # Build the documentation into docs/
       - run: pdoc --docformat google -o docs/ metko

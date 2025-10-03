@@ -19,6 +19,7 @@ classifiers = [
 dependencies = [
     "numpy",
     "scipy",
+    "scikit-image",
     "matplotlib",
     "seaborn",
     "numba",
