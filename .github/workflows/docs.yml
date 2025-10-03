@@ -1,17 +1,23 @@
 name: Metko documentation
 
-# build the documentation whenever there are new commits on main
+# Build the documentation whenever there are new commits on main
 on:
   push:
     branches:
       - main
-    # Alternative: only build for tags.
-    # tags:
-    #   - '*'
 
-# security: restrict permissions for CI jobs.
+# Set permissions for CI jobs
 permissions:
   contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress
+# and latest queued. However, do NOT cancel in-progress runs as we want to allow these
+# production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   # Build the documentation and upload the static HTML files as an artifact.
@@ -25,20 +31,17 @@ jobs:
         with:
           python-version: '3.13'
 
-      # ADJUST THIS: install all dependencies (including pdoc)
+      # Install all dependencies
       - run: pip install -e .
       - run: pip install pdoc
-      # ADJUST THIS: build your documentation into docs/.
-      # We use a custom build script for pdoc itself, ideally you just run `pdoc -o docs/ ...` here.
-#      - run: python docs/make.py
-      - run: pdoc --docformat google -o docs/
+      # Build the documentation into docs/
+      - run: pdoc --docformat google -o docs/ metko
 
       - uses: actions/upload-pages-artifact@v4
         with:
           path: docs/
 
-  # Deploy the artifact to GitHub pages.
-  # This is a separate job so that only actions/deploy-pages has the necessary permissions.
+  # Deploy the artifact to GitHub pages
   deploy:
     needs: build
     runs-on: ubuntu-latest
