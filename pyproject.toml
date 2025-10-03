@@ -16,14 +16,15 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-#dependencies = [
-#    "numpy",
-#    "scipy",
-#    "scikit-learn",
-#    "matplotlib",
-#    "numba",
-#    "pytorch",
-#]
+dependencies = [
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "seaborn",
+    "numba",
+    "torch",
+    "torchvision",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/soupault/metko"
