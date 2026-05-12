@@ -79,9 +79,9 @@ def dice_score(input_, target, num_classes):
         false_negatives = cm[index, :].sum() - true_positives
         denom = 2 * true_positives + false_positives + false_negatives
         if denom == 0:
-            score = 0
+            score = 0.0
         else:
-            score = 2 * float(true_positives) / denom
+            score = float(2 * float(true_positives) / denom)
         scores.append(score)
     return scores
 
@@ -107,9 +107,9 @@ def jaccard_score(input_, target, num_classes):
         false_negatives = cm[index, :].sum() - true_positives
         denom = true_positives + false_positives + false_negatives
         if denom == 0:
-            score = 0
+            score = 0.0
         else:
-            score = float(true_positives) / denom
+            score = float(float(true_positives) / denom)
         scores.append(score)
     return scores
 
@@ -135,9 +135,9 @@ def precision_score(input_, target, num_classes):
         false_positives = cm[:, index].sum() - true_positives
         denom = true_positives + false_positives
         if denom == 0:
-            score = 0
+            score = 0.0
         else:
-            score = float(true_positives) / denom
+            score = float(float(true_positives) / denom)
         scores.append(score)
     return scores
 
@@ -163,9 +163,9 @@ def recall_score(input_, target, num_classes):
         false_negatives = cm[index, :].sum() - true_positives
         denom = true_positives + false_negatives
         if denom == 0:
-            score = 0
+            score = 0.0
         else:
-            score = float(true_positives) / denom
+            score = float(float(true_positives) / denom)
         scores.append(score)
     return scores
 
@@ -191,9 +191,9 @@ def sensitivity_score(input_, target, num_classes):
         false_negatives = cm[index, :].sum() - true_positives
         denom = true_positives + false_negatives
         if denom == 0:
-            score = 0
+            score = 0.0
         else:
-            score = float(true_positives) / denom
+            score = float(float(true_positives) / denom)
         scores.append(score)
     return scores
 
@@ -220,9 +220,9 @@ def specificity_score(input_, target, num_classes):
         false_positives = cm[:, index].sum() - true_positives
         denom = false_positives + true_negatives
         if denom == 0:
-            score = 0
+            score = 0.0
         else:
-            score = float(true_negatives) / denom
+            score = float(float(true_negatives) / denom)
         scores.append(score)
     return scores
 
@@ -250,9 +250,9 @@ def volume_similarity(input_, target, num_classes):
         false_negatives = cm[index, :].sum() - true_positives
         denom = 2 * true_positives + false_positives + false_negatives
         if denom == 0:
-            score = 0
+            score = 0.0
         else:
-            score = 1 - abs(false_negatives - false_positives) / denom
+            score = float(1 - abs(false_negatives - false_positives) / denom)
         scores.append(score)
     return scores
 
@@ -273,9 +273,9 @@ def volume_error(input_, target, class_vals):
         numer = 2 * np.count_nonzero(np.bitwise_xor(i, t))
         denom = np.count_nonzero(i) + np.count_nonzero(t)
         if denom == 0:
-            return 0
+            return 0.0
         else:
-            return numer / denom
+            return float(numer / denom)
 
     num_classes = len(class_vals)
     scores = np.zeros((num_classes, ), dtype=float)
